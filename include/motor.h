@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include <AccelStepper.h>
 // 步进电机引脚定义
-#define STEP1 4 // 电机1脉冲
-#define DIR1 5  // 电机1方向
+#define STEP1 14 // 电机1脉冲
+#define DIR1 35  // 电机1方向
 #define STEP2 8
 #define DIR2 9
 #define STEP3 10
@@ -14,8 +14,7 @@
 #define DIR4 13
 #define STEP5 21
 #define DIR5 20
-#define STEP6 14
-#define DIR6 35
+
 
 
 // 直流电机引脚定义
@@ -23,9 +22,12 @@
 #define dir1  40
 #define PWM2  39
 #define dir2  38
+#define PWM3  36
+#define dir3  45
 // PWM 通道和频率设置
 #define PWM_CHANNEL1  1
 #define PWM_CHANNEL2  2
+#define PWM_CHANNEL3  3
 #define PWM_FREQ     20000  // 20kHz
 #define PWM_RESOLUTION_BITS 8 // 8位分辨率 (0-255)
 // 创建步进电机对象

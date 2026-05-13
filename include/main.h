@@ -5,10 +5,9 @@
 // 注意：这里只是告诉编译器“有这个函数”，并没有写函数的具体内容
 void mqtt_callback(char *topic, byte *payload, unsigned int length);
 void handleSerialCommands(void);
-
-extern QueueHandle_t Sensor_to_action_Queue; 
+void speak_init(uint8_t a, uint8_t b, uint8_t c);
 extern QueueHandle_t command_to_action_Queue; 
-
+extern QueueHandle_t sensor_to_action_Queue;
 // 在 main.h 中定义命令 ID 枚举
 typedef enum {
     CMD_UNKNOWN = 0,

@@ -29,8 +29,8 @@ void stepper_setup(void)
     stepper3.setMaxSpeed(12800);
     stepper3.setAcceleration(128000);
     
-    stepper4.setMaxSpeed(12800);
-    stepper4.setAcceleration(128000);
+    stepper4.setMaxSpeed(3200);
+    stepper4.setAcceleration(32000);
 
     stepper5.setMaxSpeed(12800);
     stepper5.setAcceleration(128000);
@@ -92,12 +92,20 @@ void motor_init()
     pinMode(dir1, OUTPUT);
     pinMode(PWM2, OUTPUT);
     pinMode(dir2, OUTPUT);
+    pinMode(PWM3, OUTPUT);
+    pinMode(dir3, OUTPUT);
+    
 
     // 配置 LEDC PWM (用于控制速度)
     ledcSetup(PWM_CHANNEL1, PWM_FREQ, PWM_RESOLUTION_BITS);
     ledcSetup(PWM_CHANNEL2, PWM_FREQ, PWM_RESOLUTION_BITS);
+    ledcSetup(PWM_CHANNEL3, PWM_FREQ, PWM_RESOLUTION_BITS);
     ledcAttachPin(PWM1, PWM_CHANNEL1);
     ledcAttachPin(PWM2, PWM_CHANNEL2);
+    ledcAttachPin(PWM3, PWM_CHANNEL3);
+     ledcWrite(PWM_CHANNEL1, 0);
+    ledcWrite(PWM_CHANNEL2, 0);
+    ledcWrite(PWM_CHANNEL3, 0);
 }
 
 void motorControl(uint8_t motorNum, int dir, int pwm)
@@ -111,6 +119,11 @@ void motorControl(uint8_t motorNum, int dir, int pwm)
     {
         digitalWrite(dir2, dir);
         ledcWrite(PWM_CHANNEL2, pwm);
+    }
+     else if (motorNum == 3)
+    {
+        digitalWrite(dir3, dir);
+        ledcWrite(PWM_CHANNEL3, pwm);
     }
     else
     {
@@ -233,10 +246,10 @@ void stepperStop(uint8_t motorNum)
 // 停止所有步进电机
 void stepperStopAll(void)
 {
-    stepper1.stop();
+   // stepper1.stop();
     stepper2.stop();
     stepper3.stop();
-    stepper4.stop();
+  //  stepper4.stop();
     stepper5.stop();
 }
 

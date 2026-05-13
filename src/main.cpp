@@ -9,6 +9,7 @@
 #include <AccelStepper.h>
 #include "driver/timer.h"
 #include "driver/pcnt.h"
+#include <driver/gpio.h>
 #include <Adafruit_NeoPixel.h>
 #include "HX711.h"
 #include "main.h"
@@ -25,17 +26,17 @@ int servo = 0;
 long x = 0;
 long y = 0;
 // 创建队列
-QueueHandle_t Sensor_to_action_Queue = NULL;
 QueueHandle_t command_to_action_Queue = NULL;
-
+QueueHandle_t sensor_to_action_Queue = NULL;
+int a = 10;
 void setup(void)
 {
     pinMode(4, OUTPUT);
     pinMode(5, OUTPUT);   // 步进电机1
     Serial.begin(115200); // 电脑串口初始化
-    Sensor_to_action_Queue = xQueueCreate(10, sizeof(32));
+    sensor_to_action_Queue = xQueueCreate(10, sizeof(8));
     command_to_action_Queue = xQueueCreate(10, sizeof(char *));
-    if (Sensor_to_action_Queue != NULL && command_to_action_Queue != NULL)
+    if (sensor_to_action_Queue != NULL && command_to_action_Queue != NULL)
     {
         printf("队列创建成功!\n");
     }
@@ -56,11 +57,12 @@ void setup(void)
     pca9685_setup(); // PCA9685 初始化
     delay(100);
     // setPCA9685_Servo(0, 0);
-    //  initBrushedESC(8, 2000, 1000, 2000); // 初始化通道0的有刷电调
+    // initBrushedESC(0, 2000, 1000, 5000); // 初始化通道0的有刷电调
     // setPCA9685_Motor(3, 1000); // 设置通道0的脉宽为1000微秒
 
     stepper_setup(); // 步进电机初始化
     motor_init();
+    speak_init(1, 2, 47);
     FreeRTOS_Setup(); // FreeRTOS初始化
     //  Init_Hx711(); // 初始化 HX711
     //  Get_Maopi();  // 获取毛皮重量（皮重）
@@ -78,111 +80,93 @@ void setup(void)
 // ====================== 主循环函数（循环展示所有效果） ======================
 void loop()
 {
-    if (Serial.available())
-    {
-        char cmd = Serial.read();
 
-        switch (cmd)
+    if (Serial.available() > 0)
+    {
+        int rx_char = Serial.read(); // 读取一个字符
+
+        // 根据字符执行相应动作
+        switch (rx_char)
         {
+
         case '1':
             setPCA9685_Motor(4, 1000); // 多轴联动
             break;
         case '2':
-            setPCA9685_Motor(4, 1250); // 多轴联动
-            break;
-        case '3':
-            setPCA9685_Motor(4, 1500); // 多轴联动
-            break;
-        case '4':
-            stepperMove(4, 500); // 风刀移动
-            break;
-        case '5':
-            stepperMove(4, -500); // 风刀移动
-            break;
-        case '6':
-            setPCA9685_Motor(0, 1000); // 八连杆
-            break;
-        case '7':
-            setPCA9685_Motor(0, 1250); // 八连杆
-            break;
-        case '8':
-            setPCA9685_Motor(0, 1500); // 八连杆
-            break;
-        case '9':
-            stepperMove(1, 500); // 风刀移动
-            break;
-        case '0':
-            stepperMove(1, -500); // 风刀移动
-            break;
-        case 'o':
-            systemEnabled = !systemEnabled;
-            Serial.printf("系统%s\n", systemEnabled ? "启用" : "禁用");
-            break;
-
-        case 'd':
-            motorControl(1, 1, 120); // 风刀上下移动
-            break;
-        case 's':
-            motorControl(1, 0, 0); // 风刀上下移动
-            break;
-        case 'a':
-            motorControl(1, 0, 120); // 风刀上下移动
+            setPCA9685_Motor(4, 1400); // 多轴联动
             break;
         case 'q':
-            stepperMoveTo(foot_x, -7000);
-            stepperMoveTo(foot_y, 6000);
-            setPCA9685_Servo(1, 60);
+            setPCA9685_Motor(4, 1300); // 多轴联动
             break;
-        case 'w':
-            stepperMoveTo(foot_z, 500);
+        case '3':
+            motorControl(2, 0, 0); // 八连杆关闭
             break;
-        case 'e':
-            setPCA9685_Servo(1, 30);
+        case '4':
+            motorControl(2, 0, 250); // 八连杆开启4
             break;
-        case 'r':
-            stepperMoveTo(foot_z, 0);
-            stepperMoveTo(foot_x, -20000);
+        case '5':
+            setPCA9685_Servo(7, 0); // 铰接门
+            break;
+        case '6':
+            setPCA9685_Servo(7, 90); // 铰接门6
             break;
         case 't':
-            setPCA9685_Servo(1, 80);
+            setPCA9685_Servo(7, 180); // 铰接门
+            break;
+        case '7':
+            stepperMove(4, 6500); // 风刀向左移动
             break;
 
-        case 'y':
-            stepperMoveTo(foot_y, 0);
-            stepperMoveTo(foot_x, 0);
+        case '8':
+            stepperMove(4, -6500); // 风刀向右移动
             break;
-        case 'z':
-            stepperMove(foot_x, 500);
+        case '9':
+            stepperMove(1, 100); // 夹具松开
             break;
-        case 'x':
-            stepperMove(foot_x, -500);
+        case '0':
+            stepperMove(1, -100); // 夹具夹紧
             break;
-        case 'c':
-            stepperMove(foot_y, 500);
+        case 'a':
+            motorControl(1, 0, 120); // 风刀向上移动
             break;
-        case 'v':
-            stepperMove(foot_y, -500);
+        case 's':
+            motorControl(1, 1, 0);
             break;
-        case 'b':
-            stepperMove(foot_z, 100);
+        case 'd':
+            motorControl(1, 1, 120); // 风刀向下移动
             break;
-        case 'n':
-            stepperMove(foot_z, -100);
+        case 'f':
+            setPCA9685_Motor(8, 1000); // 传送带
             break;
-        case 'm':
-            setPCA9685_Servo(1, 80);
+        case 'g':
+            Serial.println("  -> 执行动作6: 传送带启动");
+            setPCA9685_Motor(8, 1200); // 传送带
             break;
-        case ',':
-            setPCA9685_Servo(1, 30);
+
+        case 'h':
+            setPCA9685_Motor(8, 1400); // 传送带
             break;
+        case 'j':
+            Serial.println("  -> 执行动作6: 传送带启动");
+            setPCA9685_Motor(8, 1600); // 传送带
+            break;
+
+        case 'o':
+            systemEnabled = 1; // 切换系统使能状态
+            Serial.printf("视觉状态切换: %s\n", systemEnabled ? "已启用" : "已禁用");
+            break;
+        case 'p':
+            systemEnabled = 0; // 切换系统使能状态
+            Serial.printf("视觉状态切换: %s\n", systemEnabled ? "已启用" : "已禁用");
+            break;
+
         default:
-            Serial.printf("未知命令%c\n", cmd);
+            Serial.printf("未知命令: %c (输入 'h' 查看帮助)\n", rx_char);
             break;
         }
     }
-    stepperUpdate();
-    delay(1);
 
+    stepperUpdate();
     /*-----------------------------------PCA9685测试代码-----------------------------------*/
     // setPCA9685_Servo(0, 120); // 测试：将通道0的舵机设置到120度
     //  delay(1000); // 等待1秒
@@ -302,4 +286,17 @@ void mqtt_callback(char *topic, byte *payload, unsigned int length)
         Serial.printf("队列发送失败，释放内存: %s\n", msg);
         free(msg);
     }
+}
+
+void speak_init(uint8_t a, uint8_t b, uint8_t c)
+{
+    // 先释放引脚的默认功能（如 JTAG）
+    gpio_reset_pin((gpio_num_t)a);
+    gpio_reset_pin((gpio_num_t)b);
+    gpio_reset_pin((gpio_num_t)c);
+
+    // 再配置为下拉输入
+    pinMode(a, INPUT_PULLDOWN);
+    pinMode(b, INPUT_PULLDOWN);
+    pinMode(c, INPUT_PULLDOWN);
 }

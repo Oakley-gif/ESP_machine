@@ -9,8 +9,8 @@ extern Adafruit_NeoPixel strip;
 #define MQTT_SERVER "bemfa.com"
 #define MQTT_PORT 9501
 #define MQTT_USER "" // 巴法云通常不需要用户名
-#define WIFI_SSID "ShenyangHengrui"
-#define WIFI_PASS "ldj15234862988"
+#define WIFI_SSID "Xiaomi13"
+#define WIFI_PASS "11111111"
 #define MQTT_KEY "6a51cf8f297040f9b8551ebee8020c1c" // 客户端ID/Key
 #define MQTT_TOPIC "machine006"
 #define MQTT_SEND_TOPIC "machine006/set"
